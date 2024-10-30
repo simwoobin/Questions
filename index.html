@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A 게시판</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .star-rating {
+            display: flex;
+            direction: rtl;
+            font-size: 1.5rem;
+        }
+        .star-rating input {
+            display: none;
+        }
+        .star-rating label {
+            cursor: pointer;
+            color: #ddd;
+        }
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #f5c518;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4 text-center">Q&A 게시판</h1>
+        <div class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-xl font-semibold mb-2">과목 선택</h2>
+            <div class="d-flex items-center mb-2">
+                <select id="section-select" class="form-control mr-2">
+                    <option value="section1">수학</option>
+                    <option value="section2">국어</option>
+                    <option value="section3">영어</option>
+                    <option value="section4">화학1</option>
+                    <option value="section5">물리학1</option>
+                    <option value="section6">생명과학1</option>
+                    <option value="section7">지구과학1</option>
+                    <option value="section8">한국사</option>
+                    <option value="section9">통합사회</option>
+                    <option value="section10">동아시아</option>
+                </select>
+                <input type="text" id="new-section-input" class="form-control mr-2" placeholder="새로운 과목 이름을 입력하세요...">
+                <button onclick="addSection()" class="btn btn-primary btn-sm">과목 추가</button>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded shadow mb-4">
+            <h2 class="text-xl font-semibold mb-2">질문하기</h2>
+            <div class="form-row align-items-center">
+                <div class="col">
+                    <input type="text" id="question-input" class="form-control" placeholder="질문을 입력하세요...">
+                </div>
+                <div class="col">
+                    <input type="file" id="question-image" accept="image/*" class="form-control-file">
+                </div>
+                <div class="col-auto">
+                    <button onclick="postQuestion()" class="btn btn-success">질문하기</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="questions-container">
+            <div class="bg-white p-4 rounded shadow mb-4" id="section1">
+                <h2 class="text-xl font-semibold mb-2">수학 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section2">
+                <h2 class="text-xl font-semibold mb-2">국어 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section3">
+                <h2 class="text-xl font-semibold mb-2">영어 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section4">
+                <h2 class="text-xl font-semibold mb-2">화학1 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section5">
+                <h2 class="text-xl font-semibold mb-2">물리학1 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section6">
+                <h2 class="text-xl font-semibold mb-2">생명과학1 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section7">
+                <h2 class="text-xl font-semibold mb-2">지구과학1 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section8">
+                <h2 class="text-xl font-semibold mb-2">한국사 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section9">
+                <h2 class="text-xl font-semibold mb-2">통합사회 질문 목록</h2>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-4" id="section10">
+                <h2 class="text-xl font-semibold mb-2">동아시아 질문 목록</h2>
+            </div>
+        </div>
+    </div>
+    <script>
+        let sectionCounter = 11;  // 새로운 섹션의 ID를 위한 카운터
+
+        document.addEventListener('DOMContentLoaded', loadQuestions);
+
+        function loadQuestions() {
+            const storedQuestions = JSON.parse(localStorage.getItem('questions')) || {};
+            Object.keys(storedQuestions).forEach(sectionId => {
+                const questions = storedQuestions[sectionId];
+                questions.forEach(question => {
+                    displayQuestion(sectionId, question.text, question.image, question.answers);
+                });
+            });
+        }
+
+        function saveQuestions(questions) {
+            localStorage.setItem('questions', JSON.stringify(questions));
+        }
+
+        function getQuestions() {
+            return JSON.parse(localStorage.getItem('questions')) || {};
+        }
+
+        function postQuestion() {
+            const sectionSelect = document.getElementById('section-select');
+            const selectedSection = sectionSelect.value;
+            const questionInput = document.getElementById('question-input');
+            const questionText = questionInput.value.trim();
+            const questionImageInput = document.getElementById('question-image');
+            const questionImage = questionImageInput.files[0];
+
+            if (questionText !== "" || questionImage) {
+                const questionList = document.getElementById(selectedSection);
+                const question = { text: questionText, image: null, answers: [] };
+
+                if (questionImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        question.image = e.target.result;
+                        displayQuestion(selectedSection, questionText, question.image);
+                        saveQuestionToStorage(selectedSection, question);
+                    }
+                    reader.readAsDataURL(questionImage);
+                } else {
+                    displayQuestion(selectedSection, questionText, null);
+                    saveQuestionToStorage(selectedSection, question);
+                }
+
+                questionInput.value = "";
+                questionImageInput.value = "";
+            }
+        }
+
+        function displayQuestion(sectionId, questionText, questionImageSrc, answers = []) {
+            const questionList = document.getElementById(sectionId);
+
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question mb-4';
+
+            const questionTitle = document.createElement('h3');
+            questionTitle.textContent = questionText;
+
+            if (questionImageSrc) {
+                const imageElement = document.createElement('img');
+                imageElement.src = questionImageSrc;
+                imageElement.className = 'question-image w-48 h-auto mt-2';
+                questionDiv.appendChild(imageElement);
+            }
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = '질문 삭제';
+            deleteButton.className = 'btn btn-danger btn-sm mt-2';
+            deleteButton.onclick = () => deleteQuestion(sectionId, questionDiv, questionText);
+
+            questionDiv.appendChild(questionTitle);
+            questionDiv.appendChild(deleteButton);
+
+            const answerInput = document.createElement('input');
+            answerInput.type = 'text';
+            answerInput.placeholder = '답변을 입력하세요...';
+            answerInput.className = 'form-control mt-2';
+
+            const answerImageInput = document.createElement('input');
+            answerImageInput.type = 'file';
+            answerImageInput.accept = 'image/*';
+            answerImageInput.className = 'form-control-file mt-2';
+
+            const answerButton = document.createElement('button');
+            answerButton.textContent = '답변 달기';
+            answerButton.className = 'btn btn-primary btn-sm mt-2';
+            answerButton.onclick = () => postAnswer(answerInput, answerImageInput, questionDiv, sectionId, questionText);
+
+            questionDiv.appendChild(answerInput);
+            questionDiv.appendChild(answerImageInput);
+            questionDiv.appendChild(answerButton);
+
+            questionList.appendChild(questionDiv);
+
+            answers.forEach(answer => displayAnswer(inputElement, questionDiv, sectionId, questionText, answer.text, answer.image));
+        }
+
+        function saveQuestionToStorage(sectionId, question) {
+            const questions = getQuestions();
+            if (!questions[sectionId]) {
+                questions[sectionId] = [];
+            }
+            questions[sectionId].push(question);
+            saveQuestions(questions);
+        }
+
+        function deleteQuestion(sectionId, questionDiv, questionText) {
+            const questions = getQuestions();
+            questions[sectionId] = questions[sectionId].filter(question => question.text !== questionText);
+            saveQuestions(questions);
+            questionDiv.remove();
+        }
+
+        function postAnswer(inputElement, imageInputElement, questionDiv, sectionId, questionText) {
+            const answerText = inputElement.value.trim();
+            const answerImage = imageInputElement.files[0];
+            const questions = getQuestions();
+            const question = questions[sectionId].find(q => q.text === questionText);
+
+            if (answerText !== "" || answerImage) {
+                if (answerImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const answer = { text: answerText, image: e.target.result };
+                        question.answers.push(answer);
+                        displayAnswer(inputElement, questionDiv, sectionId, questionText, answerText, e.target.result);
+                        saveQuestions(questions);
+                    }
+                    reader.readAsDataURL(answerImage);
+                } else {
+                    const answer = { text: answerText, image: null };
+                    question.answers.push(answer);
+                    displayAnswer(inputElement, questionDiv, sectionId, questionText, answerText, null);
+                    saveQuestions(questions);
+                }
+
+                inputElement.value = "";
+                imageInputElement.value = "";
+            }
+        }
+
+        function displayAnswer(inputElement, questionDiv, sectionId, questionText, answerText, answerImageSrc) {
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'answer mt-2 p-2 border rounded bg-gray-50';
+
+            if (answerText) {
+                const answerTextDiv = document.createElement('div');
+                answerTextDiv.textContent = answerText;
+                answerDiv.appendChild(answerTextDiv);
+            }
+
+            if (answerImageSrc) {
+                const imageElement = document.createElement('img');
+                imageElement.src = answerImageSrc;
+                imageElement.className = 'answer-image w-32 h-auto mt-2';
+                answerDiv.appendChild(imageElement);
+            }
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = '답변 삭제';
+            deleteButton.className = 'btn btn-danger btn-sm mt-2';
+            deleteButton.onclick = () => deleteAnswer(sectionId, questionText, answerText, answerDiv);
+
+            answerDiv.appendChild(deleteButton);
+
+            const starRating = createStarRating(sectionId, questionText, answerText);
+            answerDiv.appendChild(starRating);
+
+            questionDiv.appendChild(answerDiv);
+        }
+
+        function deleteAnswer(sectionId, questionText, answerText, answerDiv) {
+            const questions = getQuestions();
+            const question = questions[sectionId].find(q => q.text === questionText);
+            question.answers = question.answers.filter(answer => answer.text !== answerText);
+            saveQuestions(questions);
+            answerDiv.remove();
+        }
+
+        function createStarRating(sectionId, questionText, answerText) {
+            const starRatingDiv = document.createElement('div');
+            starRatingDiv.className = 'star-rating mt-2';
+
+            for (let i = 5; i >= 1; i--) {
+                const starInput = document.createElement('input');
+                starInput.type = 'radio';
+                starInput.id = `${sectionId}-${questionText}-${answerText}-star${i}`;
+                starInput.name = `${sectionId}-${questionText}-${answerText}-rating`;
+                starInput.value = i;
+                starInput.className = 'star-input';
+                starInput.onclick = () => saveStarRating(sectionId, questionText, answerText, i);
+
+                const starLabel = document.createElement('label');
+                starLabel.htmlFor = `${sectionId}-${questionText}-${answerText}-star${i}`;
+                starLabel.textContent = '★';
+                starLabel.className = 'star-label';
+
+                starRatingDiv.appendChild(starInput);
+                starRatingDiv.appendChild(starLabel);
+            }
+
+            loadStarRating(sectionId, questionText, answerText);
+
+            return starRatingDiv;
+        }
+
+        function saveStarRating(sectionId, questionText, answerText, rating) {
+            const ratings = JSON.parse(localStorage.getItem('ratings')) || {};
+            if (!ratings[sectionId]) {
+                ratings[sectionId] = {};
+            }
+            if (!ratings[sectionId][questionText]) {
+                ratings[sectionId][questionText] = {};
+            }
+            ratings[sectionId][questionText][answerText] = rating;
+            localStorage.setItem('ratings', JSON.stringify(ratings));
+        }
+
+        function loadStarRating(sectionId, questionText, answerText) {
+            const ratings = JSON.parse(localStorage.getItem('ratings')) || {};
+            if (ratings[sectionId] && ratings[sectionId][questionText] && ratings[sectionId][questionText][answerText]) {
+                const rating = ratings[sectionId][questionText][answerText];
+                const starInput = document.getElementById(`${sectionId}-${questionText}-${answerText}-star${rating}`);
+                if (starInput) {
+                    starInput.checked = true;
+                }
+            }
+        }
+
+        function addSection() {
+            const newSectionInput = document.getElementById('new-section-input');
+            const newSectionName = newSectionInput.value.trim();
+            if (newSectionName !== "") {
+                const sectionSelect = document.getElementById('section-select');
+
+                // Create new option for the select
+                const newOption = document.createElement('option');
+                const newSectionId = 'section' + sectionCounter++;
+                newOption.value = newSectionId;
+                newOption.textContent = newSectionName;
+                sectionSelect.appendChild(newOption);
+
+                // Create new section div
+                const newSectionDiv = document.createElement('div');
+                newSectionDiv.className = 'bg-white p-4 rounded shadow mb-4';
+                newSectionDiv.id = newSectionId;
+
+                const newSectionTitle = document.createElement('h2');
+                newSectionTitle.className = 'text-xl font-semibold mb-2';
+                newSectionTitle.textContent = newSectionName + ' 질문 목록';
+                newSectionDiv.appendChild(newSectionTitle);
+
+                document.getElementById('questions-container').appendChild(newSectionDiv);
+
+                newSectionInput.value = "";
+            }
+        }
+    </script>
+</body>
+</html>

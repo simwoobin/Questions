@@ -1,0 +1,51 @@
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+.section-form, .question-form, .questions-list {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.section-form input[type="text"], .section-form button, .section-form select,
+.question-form input[type="text"], .question-form button, .question-form input[type="file"],
+.questions-list .question input[type="text"], .questions-list .question button, .questions-list .question input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+}
+
+.questions-list .question {
+    background: #f1f1f1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.questions-list .question h3 {
+    margin: 0 0 10px 0;
+}
+
+.question-image, .answer-image {
+    max-width: 100%;
+    height: auto;
+    margin-top: 10px;
+}
